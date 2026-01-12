@@ -58,10 +58,8 @@ jobs:
       
       - name: Download mpv AppImage
         run: |
-          # Try multiple sources for mpv AppImage
-          wget -q "https://github.com/pkgforge-dev/mpv-AppImage/releases/latest/download/mpv-x86_64.AppImage" -O mpv.AppImage || \
-          wget -q "https://github.com/ivan-hc/MPV-appimage/releases/download/continuous/mpv-x86_64.AppImage" -O mpv.AppImage || \
-          (echo "Downloading from nightly.link" && curl -L "https://nightly.link/mpv-player/mpv/workflows/build/master/mpv-linux-x86_64.zip" -o mpv.zip && unzip mpv.zip && mv mpv mpv.AppImage)
+          # Download from ivan-hc MPV-appimage (actively maintained)
+          curl -L "https://github.com/ivan-hc/MPV-appimage/releases/download/continuous/mpv-x86_64.AppImage" -o mpv.AppImage
           chmod +x mpv.AppImage
           
       - name: Bundle package
