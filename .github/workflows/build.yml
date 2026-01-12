@@ -58,9 +58,12 @@ jobs:
       
       - name: Download mpv AppImage
         run: |
-          # Download from ivan-hc MPV-appimage (actively maintained)
-          curl -L "https://github.com/ivan-hc/MPV-appimage/releases/download/continuous/mpv-x86_64.AppImage" -o mpv.AppImage
+          # Get the actual asset URL from ivan-hc releases
+          ASSET_URL=$(curl -s https://api.github.com/repos/ivan-hc/MPV-appimage/releases/tags/continuous | grep -o '"browser_download_url": "[^"]*x86_64[^"]*AppImage"' | head -1 | cut -d'"' -f4)
+          echo "Downloading: $ASSET_URL"
+          curl -L "$ASSET_URL" -o mpv.AppImage
           chmod +x mpv.AppImage
+          ls -la mpv.AppImage
           
       - name: Bundle package
         run: |
