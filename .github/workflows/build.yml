@@ -16,7 +16,6 @@ jobs:
       - name: Download mpv
         shell: pwsh
         run: |
-          # Download latest mpv build for Windows (x64)
           $releases = Invoke-RestMethod "https://api.github.com/repos/shinchiro/mpv-winbuild-cmake/releases/latest"
           $asset = $releases.assets | Where-Object { $_.name -match "mpv-x86_64.*7z$" } | Select-Object -First 1
           if ($asset) {
@@ -32,21 +31,14 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path PlayTorrioPlayer
-          
-          # Find and copy mpv.exe
           $mpvExe = Get-ChildItem -Path mpv-extract -Recurse -Filter "mpv.exe" | Select-Object -First 1
           if ($mpvExe) {
             Copy-Item $mpvExe.FullName -Destination PlayTorrioPlayer/
-            Write-Host "Copied mpv.exe from: $($mpvExe.FullName)"
           } else {
             Write-Error "mpv.exe not found!"
             exit 1
           }
-          
-          # Copy portable_config
           Copy-Item -Recurse portable_config PlayTorrioPlayer/
-          
-          # Copy launcher
           Copy-Item playtp.cmd PlayTorrioPlayer/
           
       - name: Create archive
@@ -66,22 +58,15 @@ jobs:
       
       - name: Download mpv AppImage
         run: |
-          # Download mpv AppImage (portable, works on most Linux distros)
           wget -q "https://github.com/pkgforge-dev/mpv-AppImage/releases/download/continuous/mpv-x86_64.AppImage" -O mpv.AppImage
           chmod +x mpv.AppImage
           
       - name: Bundle package
         run: |
           mkdir -p PlayTorrioPlayer
-          
-          # Copy mpv AppImage
           cp mpv.AppImage PlayTorrioPlayer/mpv
           chmod +x PlayTorrioPlayer/mpv
-          
-          # Copy portable_config
           cp -r portable_config PlayTorrioPlayer/
-          
-          # Copy launcher script
           cp playtp PlayTorrioPlayer/
           chmod +x PlayTorrioPlayer/playtp
           
@@ -101,83 +86,15 @@ jobs:
       
       - name: Download mpv.app
         run: |
-          # Download prebuilt mpv.app from stolendata (Intel build)
           curl -L "https://laboratory.stolendata.net/~djinn/mpv_osx/mpv-latest.tar.gz" -o mpv.tar.gz
           tar -xzf mpv.tar.gz
           
       - name: Bundle package
         run: |
           mkdir -p PlayTorrioPlayer
-          
-          # Copy the entire mpv.app bundle
           cp -R mpv.app PlayTorrioPlayer/
-          
-          # Copy portable_config
           cp -r portable_config PlayTorrioPlayer/
-          
-          # Copy launcher script
           cp playtp PlayTorrioPlayer/
-          chmod +x PlayTorrioPlayer/playtp
-          
-          # Create a wrapper that uses the bundled mpv.app
-          cat > PlayTorrioPlayer/playtp << 'SCRIPT'
-#!/bin/bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_DIR="$SCRIPT_DIR/portable_config"
-SUBS_JSON="$CONFIG_DIR/playtorrio-subs.json"
-
-VIDEO_URL="$1"
-shift
-
-if [ -z "$VIDEO_URL" ]; then
-    echo "Usage: playtp \"video_url\" [provider \"subname\" \"suburl\" ...] [provider2 ...]"
-    exit 1
-fi
-
-# Parse providers and subtitles into JSON
-echo '{"providers":[' > "$SUBS_JSON"
-FIRST_PROV=1
-FIRST_SUB=1
-HAS_PROVIDER=0
-
-while [ $# -gt 0 ]; do
-    ARG="$1"
-    NEXT="$2"
-    if [[ "$NEXT" =~ ^https?:// ]]; then
-        if [ "$HAS_PROVIDER" -eq 0 ]; then
-            echo '{"name":"External","subtitles":[' >> "$SUBS_JSON"
-            FIRST_PROV=0
-            HAS_PROVIDER=1
-            FIRST_SUB=1
-        fi
-        [ "$FIRST_SUB" -eq 0 ] && echo ',' >> "$SUBS_JSON"
-        echo "{\"name\":\"$ARG\",\"url\":\"$NEXT\"}" >> "$SUBS_JSON"
-        FIRST_SUB=0
-        shift 2
-    else
-        if [ "$HAS_PROVIDER" -eq 1 ]; then
-            echo ']}' >> "$SUBS_JSON"
-            echo ',' >> "$SUBS_JSON"
-        fi
-        echo "{\"name\":\"$ARG\",\"subtitles\":[" >> "$SUBS_JSON"
-        FIRST_PROV=0
-        HAS_PROVIDER=1
-        FIRST_SUB=1
-        shift
-    fi
-done
-[ "$HAS_PROVIDER" -eq 1 ] && echo ']}' >> "$SUBS_JSON"
-echo ']}' >> "$SUBS_JSON"
-
-# Use bundled mpv.app or fall back to system mpv
-if [ -d "$SCRIPT_DIR/mpv.app" ]; then
-    "$SCRIPT_DIR/mpv.app/Contents/MacOS/mpv" --config-dir="$CONFIG_DIR" "$VIDEO_URL"
-elif [ -x "$SCRIPT_DIR/mpv" ]; then
-    "$SCRIPT_DIR/mpv" --config-dir="$CONFIG_DIR" "$VIDEO_URL"
-else
-    mpv --config-dir="$CONFIG_DIR" "$VIDEO_URL"
-fi
-SCRIPT
           chmod +x PlayTorrioPlayer/playtp
           
       - name: Create archive
@@ -196,83 +113,15 @@ SCRIPT
       
       - name: Download mpv.app
         run: |
-          # Download prebuilt mpv.app from stolendata (ARM build for Apple Silicon)
           curl -L "https://laboratory.stolendata.net/~djinn/mpv_osx/mpv-arm64-latest.tar.gz" -o mpv.tar.gz
           tar -xzf mpv.tar.gz
           
       - name: Bundle package
         run: |
           mkdir -p PlayTorrioPlayer
-          
-          # Copy the entire mpv.app bundle
           cp -R mpv.app PlayTorrioPlayer/
-          
-          # Copy portable_config
           cp -r portable_config PlayTorrioPlayer/
-          
-          # Copy launcher script
           cp playtp PlayTorrioPlayer/
-          chmod +x PlayTorrioPlayer/playtp
-          
-          # Create a wrapper that uses the bundled mpv.app
-          cat > PlayTorrioPlayer/playtp << 'SCRIPT'
-#!/bin/bash
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-CONFIG_DIR="$SCRIPT_DIR/portable_config"
-SUBS_JSON="$CONFIG_DIR/playtorrio-subs.json"
-
-VIDEO_URL="$1"
-shift
-
-if [ -z "$VIDEO_URL" ]; then
-    echo "Usage: playtp \"video_url\" [provider \"subname\" \"suburl\" ...] [provider2 ...]"
-    exit 1
-fi
-
-# Parse providers and subtitles into JSON
-echo '{"providers":[' > "$SUBS_JSON"
-FIRST_PROV=1
-FIRST_SUB=1
-HAS_PROVIDER=0
-
-while [ $# -gt 0 ]; do
-    ARG="$1"
-    NEXT="$2"
-    if [[ "$NEXT" =~ ^https?:// ]]; then
-        if [ "$HAS_PROVIDER" -eq 0 ]; then
-            echo '{"name":"External","subtitles":[' >> "$SUBS_JSON"
-            FIRST_PROV=0
-            HAS_PROVIDER=1
-            FIRST_SUB=1
-        fi
-        [ "$FIRST_SUB" -eq 0 ] && echo ',' >> "$SUBS_JSON"
-        echo "{\"name\":\"$ARG\",\"url\":\"$NEXT\"}" >> "$SUBS_JSON"
-        FIRST_SUB=0
-        shift 2
-    else
-        if [ "$HAS_PROVIDER" -eq 1 ]; then
-            echo ']}' >> "$SUBS_JSON"
-            echo ',' >> "$SUBS_JSON"
-        fi
-        echo "{\"name\":\"$ARG\",\"subtitles\":[" >> "$SUBS_JSON"
-        FIRST_PROV=0
-        HAS_PROVIDER=1
-        FIRST_SUB=1
-        shift
-    fi
-done
-[ "$HAS_PROVIDER" -eq 1 ] && echo ']}' >> "$SUBS_JSON"
-echo ']}' >> "$SUBS_JSON"
-
-# Use bundled mpv.app or fall back to system mpv
-if [ -d "$SCRIPT_DIR/mpv.app" ]; then
-    "$SCRIPT_DIR/mpv.app/Contents/MacOS/mpv" --config-dir="$CONFIG_DIR" "$VIDEO_URL"
-elif [ -x "$SCRIPT_DIR/mpv" ]; then
-    "$SCRIPT_DIR/mpv" --config-dir="$CONFIG_DIR" "$VIDEO_URL"
-else
-    mpv --config-dir="$CONFIG_DIR" "$VIDEO_URL"
-fi
-SCRIPT
           chmod +x PlayTorrioPlayer/playtp
           
       - name: Create archive
