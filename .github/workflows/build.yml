@@ -58,7 +58,10 @@ jobs:
       
       - name: Download mpv AppImage
         run: |
-          wget -q "https://github.com/pkgforge-dev/mpv-AppImage/releases/download/continuous/mpv-x86_64.AppImage" -O mpv.AppImage
+          # Try multiple sources for mpv AppImage
+          wget -q "https://github.com/pkgforge-dev/mpv-AppImage/releases/latest/download/mpv-x86_64.AppImage" -O mpv.AppImage || \
+          wget -q "https://github.com/ivan-hc/MPV-appimage/releases/download/continuous/mpv-x86_64.AppImage" -O mpv.AppImage || \
+          (echo "Downloading from nightly.link" && curl -L "https://nightly.link/mpv-player/mpv/workflows/build/master/mpv-linux-x86_64.zip" -o mpv.zip && unzip mpv.zip && mv mpv mpv.AppImage)
           chmod +x mpv.AppImage
           
       - name: Bundle package
@@ -128,9 +131,10 @@ jobs:
       - name: Bundle package
         run: |
           mkdir -p PlayTorrioPlayer
-          # Find and copy the .app bundle (might be named differently)
-          APP_BUNDLE=$(find . -maxdepth 1 -name "*.app" -type d | head -1)
+          # Find .app in current dir or subdirectories
+          APP_BUNDLE=$(find . -name "*.app" -type d | head -1)
           if [ -n "$APP_BUNDLE" ]; then
+            echo "Found: $APP_BUNDLE"
             cp -R "$APP_BUNDLE" PlayTorrioPlayer/mpv.app
           else
             echo "No .app bundle found!"
