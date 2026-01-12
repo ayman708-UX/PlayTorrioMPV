@@ -1,0 +1,75 @@
+#!/bin/bash
+# PlayTorrioPlayer - Cross-platform Launcher
+# Usage: playtp "video_url" [provider "subname" "suburl" ...] [provider2 ...]
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CONFIG_DIR="$SCRIPT_DIR/portable_config"
+SUBS_JSON="$CONFIG_DIR/playtorrio-subs.json"
+
+VIDEO_URL="$1"
+shift
+
+if [ -z "$VIDEO_URL" ]; then
+    echo "Usage: playtp \"video_url\" [provider \"subname\" \"suburl\" ...] [provider2 ...]"
+    echo ""
+    echo "Example:"
+    echo "  playtp \"https://example.com/video.mp4\" OpenSubs \"English\" \"https://sub.srt\""
+    exit 1
+fi
+
+# Parse providers and subtitles into JSON
+echo '{"providers":[' > "$SUBS_JSON"
+
+FIRST_PROV=1
+FIRST_SUB=1
+HAS_PROVIDER=0
+
+while [ $# -gt 0 ]; do
+    ARG="$1"
+    NEXT="$2"
+    
+    # Check if NEXT is a URL
+    if [[ "$NEXT" =~ ^https?:// ]]; then
+        # NEXT is URL, ARG is subtitle name
+        if [ "$HAS_PROVIDER" -eq 0 ]; then
+            echo '{"name":"External","subtitles":[' >> "$SUBS_JSON"
+            FIRST_PROV=0
+            HAS_PROVIDER=1
+            FIRST_SUB=1
+        fi
+        [ "$FIRST_SUB" -eq 0 ] && echo ',' >> "$SUBS_JSON"
+        echo "{\"name\":\"$ARG\",\"url\":\"$NEXT\"}" >> "$SUBS_JSON"
+        FIRST_SUB=0
+        shift 2
+    else
+        # Not a URL, this is a provider name
+        if [ "$HAS_PROVIDER" -eq 1 ]; then
+            echo ']}' >> "$SUBS_JSON"
+            echo ',' >> "$SUBS_JSON"
+        fi
+        echo "{\"name\":\"$ARG\",\"subtitles\":[" >> "$SUBS_JSON"
+        FIRST_PROV=0
+        HAS_PROVIDER=1
+        FIRST_SUB=1
+        shift
+    fi
+done
+
+[ "$HAS_PROVIDER" -eq 1 ] && echo ']}' >> "$SUBS_JSON"
+echo ']}' >> "$SUBS_JSON"
+
+# Find mpv - prefer bundled, then system
+if [ -x "$SCRIPT_DIR/mpv" ]; then
+    MPV_PATH="$SCRIPT_DIR/mpv"
+elif [ -x "$SCRIPT_DIR/mpv.exe" ]; then
+    MPV_PATH="$SCRIPT_DIR/mpv.exe"
+else
+    MPV_PATH=$(which mpv 2>/dev/null)
+fi
+
+if [ -z "$MPV_PATH" ]; then
+    echo "Error: mpv not found. Please install mpv or place it in this folder."
+    exit 1
+fi
+
+exec "$MPV_PATH" --config-dir="$CONFIG_DIR" "$VIDEO_URL"

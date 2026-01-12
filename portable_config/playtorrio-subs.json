@@ -1,0 +1,11 @@
+{"providers":[
+{"name":"TestProvider","subtitles":[
+{"name":"English","url":"https://example.com/en.srt"}
+,
+{"name":"Spanish","url":"https://example.com/es.srt"}
+]}
+,
+{"name":"TestProvider2","subtitles":[
+{"name":"england","url":"https://yes.com"}
+]}
+]}
