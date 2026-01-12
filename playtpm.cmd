@@ -7,7 +7,7 @@ set "SUBS_JSON=%CONFIG_DIR%\playtorrio-subs.json"
 
 set "VIDEO_URL=%~1"
 if "%VIDEO_URL%"=="" (
-    echo Usage: playtp.cmd "video_url" [provider "subname" "suburl" ...] [provider2 ...]
+    echo Usage: playtpm "video_url" [provider "subname" "suburl" ...] [provider2 ...]
     exit /b 1
 )
 

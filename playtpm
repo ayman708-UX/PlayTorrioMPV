@@ -1,6 +1,6 @@
 #!/bin/bash
-# PlayTorrioPlayer - Cross-platform Launcher
-# Usage: playtp "video_url" [provider "subname" "suburl" ...] [provider2 ...]
+# PlayTorrioMPV - Cross-platform Launcher
+# Usage: playtpm "video_url" [provider "subname" "suburl" ...] [provider2 ...]
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 CONFIG_DIR="$SCRIPT_DIR/portable_config"
@@ -10,10 +10,10 @@ VIDEO_URL="$1"
 shift
 
 if [ -z "$VIDEO_URL" ]; then
-    echo "Usage: playtp \"video_url\" [provider \"subname\" \"suburl\" ...] [provider2 ...]"
+    echo "Usage: playtpm \"video_url\" [provider \"subname\" \"suburl\" ...] [provider2 ...]"
     echo ""
     echo "Example:"
-    echo "  playtp \"https://example.com/video.mp4\" OpenSubs \"English\" \"https://sub.srt\""
+    echo "  playtpm \"https://example.com/video.mp4\" OpenSubs \"English\" \"https://sub.srt\""
     exit 1
 fi
 

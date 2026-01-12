@@ -1,4 +1,4 @@
-name: Build PlayTorrioPlayer
+name: Build PlayTorrioMPV
 
 on:
   push:
@@ -30,26 +30,26 @@ jobs:
       - name: Bundle package
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path PlayTorrioPlayer
+          New-Item -ItemType Directory -Force -Path PlayTorrioMPV
           $mpvExe = Get-ChildItem -Path mpv-extract -Recurse -Filter "mpv.exe" | Select-Object -First 1
           if ($mpvExe) {
-            Copy-Item $mpvExe.FullName -Destination PlayTorrioPlayer/
+            Copy-Item $mpvExe.FullName -Destination PlayTorrioMPV/
           } else {
             Write-Error "mpv.exe not found!"
             exit 1
           }
-          Copy-Item -Recurse portable_config PlayTorrioPlayer/
-          Copy-Item playtp.cmd PlayTorrioPlayer/
+          Copy-Item -Recurse portable_config PlayTorrioMPV/
+          Copy-Item playtpm.cmd PlayTorrioMPV/
           
       - name: Create archive
         shell: pwsh
-        run: Compress-Archive -Path PlayTorrioPlayer -DestinationPath PlayTorrioPlayer-Windows-x64.zip
+        run: Compress-Archive -Path PlayTorrioMPV -DestinationPath PlayTorrioMPV-Windows-x64.zip
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PlayTorrioPlayer-Windows-x64
-          path: PlayTorrioPlayer-Windows-x64.zip
+          name: PlayTorrioMPV-Windows-x64
+          path: PlayTorrioMPV-Windows-x64.zip
 
   build-linux:
     runs-on: ubuntu-22.04
@@ -58,7 +58,6 @@ jobs:
       
       - name: Download mpv AppImage
         run: |
-          # Get the actual asset URL from ivan-hc releases
           ASSET_URL=$(curl -s https://api.github.com/repos/ivan-hc/MPV-appimage/releases/tags/continuous | grep -o '"browser_download_url": "[^"]*x86_64[^"]*AppImage"' | head -1 | cut -d'"' -f4)
           echo "Downloading: $ASSET_URL"
           curl -L "$ASSET_URL" -o mpv.AppImage
@@ -67,21 +66,21 @@ jobs:
           
       - name: Bundle package
         run: |
-          mkdir -p PlayTorrioPlayer
-          cp mpv.AppImage PlayTorrioPlayer/mpv
-          chmod +x PlayTorrioPlayer/mpv
-          cp -r portable_config PlayTorrioPlayer/
-          cp playtp PlayTorrioPlayer/
-          chmod +x PlayTorrioPlayer/playtp
+          mkdir -p PlayTorrioMPV
+          cp mpv.AppImage PlayTorrioMPV/mpv
+          chmod +x PlayTorrioMPV/mpv
+          cp -r portable_config PlayTorrioMPV/
+          cp playtpm PlayTorrioMPV/
+          chmod +x PlayTorrioMPV/playtpm
           
       - name: Create archive
-        run: tar -czvf PlayTorrioPlayer-Linux-x64.tar.gz PlayTorrioPlayer
+        run: tar -czvf PlayTorrioMPV-Linux-x64.tar.gz PlayTorrioMPV
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PlayTorrioPlayer-Linux-x64
-          path: PlayTorrioPlayer-Linux-x64.tar.gz
+          name: PlayTorrioMPV-Linux-x64
+          path: PlayTorrioMPV-Linux-x64.tar.gz
 
   build-macos-intel:
     runs-on: macos-15
@@ -96,27 +95,26 @@ jobs:
           
       - name: Bundle package
         run: |
-          mkdir -p PlayTorrioPlayer
-          # Find and copy the .app bundle (might be named differently)
+          mkdir -p PlayTorrioMPV
           APP_BUNDLE=$(find . -maxdepth 1 -name "*.app" -type d | head -1)
           if [ -n "$APP_BUNDLE" ]; then
-            cp -R "$APP_BUNDLE" PlayTorrioPlayer/mpv.app
+            cp -R "$APP_BUNDLE" PlayTorrioMPV/mpv.app
           else
             echo "No .app bundle found!"
             exit 1
           fi
-          cp -r portable_config PlayTorrioPlayer/
-          cp playtp PlayTorrioPlayer/
-          chmod +x PlayTorrioPlayer/playtp
+          cp -r portable_config PlayTorrioMPV/
+          cp playtpm PlayTorrioMPV/
+          chmod +x PlayTorrioMPV/playtpm
           
       - name: Create archive
-        run: zip -r PlayTorrioPlayer-macOS-Intel.zip PlayTorrioPlayer
+        run: zip -r PlayTorrioMPV-macOS-Intel.zip PlayTorrioMPV
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PlayTorrioPlayer-macOS-Intel
-          path: PlayTorrioPlayer-macOS-Intel.zip
+          name: PlayTorrioMPV-macOS-Intel
+          path: PlayTorrioMPV-macOS-Intel.zip
 
   build-macos-arm:
     runs-on: macos-14
@@ -131,28 +129,27 @@ jobs:
           
       - name: Bundle package
         run: |
-          mkdir -p PlayTorrioPlayer
-          # Find .app in current dir or subdirectories
+          mkdir -p PlayTorrioMPV
           APP_BUNDLE=$(find . -name "*.app" -type d | head -1)
           if [ -n "$APP_BUNDLE" ]; then
             echo "Found: $APP_BUNDLE"
-            cp -R "$APP_BUNDLE" PlayTorrioPlayer/mpv.app
+            cp -R "$APP_BUNDLE" PlayTorrioMPV/mpv.app
           else
             echo "No .app bundle found!"
             exit 1
           fi
-          cp -r portable_config PlayTorrioPlayer/
-          cp playtp PlayTorrioPlayer/
-          chmod +x PlayTorrioPlayer/playtp
+          cp -r portable_config PlayTorrioMPV/
+          cp playtpm PlayTorrioMPV/
+          chmod +x PlayTorrioMPV/playtpm
           
       - name: Create archive
-        run: zip -r PlayTorrioPlayer-macOS-ARM.zip PlayTorrioPlayer
+        run: zip -r PlayTorrioMPV-macOS-ARM.zip PlayTorrioMPV
           
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PlayTorrioPlayer-macOS-ARM
-          path: PlayTorrioPlayer-macOS-ARM.zip
+          name: PlayTorrioMPV-macOS-ARM
+          path: PlayTorrioMPV-macOS-ARM.zip
 
   release:
     needs: [build-windows, build-linux, build-macos-intel, build-macos-arm]
@@ -166,9 +163,9 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           files: |
-            PlayTorrioPlayer-Windows-x64/PlayTorrioPlayer-Windows-x64.zip
-            PlayTorrioPlayer-Linux-x64/PlayTorrioPlayer-Linux-x64.tar.gz
-            PlayTorrioPlayer-macOS-Intel/PlayTorrioPlayer-macOS-Intel.zip
-            PlayTorrioPlayer-macOS-ARM/PlayTorrioPlayer-macOS-ARM.zip
+            PlayTorrioMPV-Windows-x64/PlayTorrioMPV-Windows-x64.zip
+            PlayTorrioMPV-Linux-x64/PlayTorrioMPV-Linux-x64.tar.gz
+            PlayTorrioMPV-macOS-Intel/PlayTorrioMPV-macOS-Intel.zip
+            PlayTorrioMPV-macOS-ARM/PlayTorrioMPV-macOS-ARM.zip
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
