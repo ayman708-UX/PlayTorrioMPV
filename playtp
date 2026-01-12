@@ -61,6 +61,8 @@ echo ']}' >> "$SUBS_JSON"
 # Find mpv - prefer bundled, then system
 if [ -x "$SCRIPT_DIR/mpv" ]; then
     MPV_PATH="$SCRIPT_DIR/mpv"
+elif [ -x "$SCRIPT_DIR/mpv.app/Contents/MacOS/mpv" ]; then
+    MPV_PATH="$SCRIPT_DIR/mpv.app/Contents/MacOS/mpv"
 elif [ -x "$SCRIPT_DIR/mpv.exe" ]; then
     MPV_PATH="$SCRIPT_DIR/mpv.exe"
 else
