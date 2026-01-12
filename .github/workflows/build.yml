@@ -80,7 +80,7 @@ jobs:
           path: PlayTorrioPlayer-Linux-x64.tar.gz
 
   build-macos-intel:
-    runs-on: macos-13
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
       
@@ -88,11 +88,19 @@ jobs:
         run: |
           curl -L "https://laboratory.stolendata.net/~djinn/mpv_osx/mpv-latest.tar.gz" -o mpv.tar.gz
           tar -xzf mpv.tar.gz
+          ls -la
           
       - name: Bundle package
         run: |
           mkdir -p PlayTorrioPlayer
-          cp -R mpv.app PlayTorrioPlayer/
+          # Find and copy the .app bundle (might be named differently)
+          APP_BUNDLE=$(find . -maxdepth 1 -name "*.app" -type d | head -1)
+          if [ -n "$APP_BUNDLE" ]; then
+            cp -R "$APP_BUNDLE" PlayTorrioPlayer/mpv.app
+          else
+            echo "No .app bundle found!"
+            exit 1
+          fi
           cp -r portable_config PlayTorrioPlayer/
           cp playtp PlayTorrioPlayer/
           chmod +x PlayTorrioPlayer/playtp
@@ -115,11 +123,19 @@ jobs:
         run: |
           curl -L "https://laboratory.stolendata.net/~djinn/mpv_osx/mpv-arm64-latest.tar.gz" -o mpv.tar.gz
           tar -xzf mpv.tar.gz
+          ls -la
           
       - name: Bundle package
         run: |
           mkdir -p PlayTorrioPlayer
-          cp -R mpv.app PlayTorrioPlayer/
+          # Find and copy the .app bundle (might be named differently)
+          APP_BUNDLE=$(find . -maxdepth 1 -name "*.app" -type d | head -1)
+          if [ -n "$APP_BUNDLE" ]; then
+            cp -R "$APP_BUNDLE" PlayTorrioPlayer/mpv.app
+          else
+            echo "No .app bundle found!"
+            exit 1
+          fi
           cp -r portable_config PlayTorrioPlayer/
           cp playtp PlayTorrioPlayer/
           chmod +x PlayTorrioPlayer/playtp
